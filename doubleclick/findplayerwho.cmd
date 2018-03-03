@@ -1,0 +1,1 @@
+powershell.exe -executionpolicy bypass -windowstyle Maximized ..\commandline\findplayerwho.ps1
