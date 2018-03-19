@@ -94,7 +94,7 @@ foreach($thischaracter in $raidcharacters){
 }
 $raidcharacters.Count
 
-foreach($i in $(get-content $guildfile | %{$_.Split("`t")[6]} | Group-Object)){
+foreach($i in $(get-content $guildfile | %{$_.Split("`t")[6]} | Group-Object | Sort-Object Count -Descending)){
     $i.Name + " has " + $i.Count + " players - is this the raid zone?"
     $answer = Read-Host "Y or N"
     if($answer -imatch "y"){
