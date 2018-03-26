@@ -6,6 +6,6 @@
 }
 
 function logit($logline, $logfilepath){
-    $logline | Out-File $logfilepath -Append
+    $(get-date -Format o) + " " + $logline | Out-File $logfilepath -Append
     "[*] To Audit Log: $logline" | Write-Host -ForegroundColor Yellow
 }

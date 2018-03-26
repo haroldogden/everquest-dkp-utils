@@ -1,13 +1,9 @@
 ﻿param($guildfile, $raidfile, [switch]$debug=$false)
-$logfile = $raidfile.replace("RaidRoster", "audit")
+$logfile = $($(ls $raidfile | select -first 1)[0].Directory.FullName) + "\audit.txt"
 $outfile = $raidfile.replace("RaidRoster", "dkpimport")
 
 if($(test-path $outfile) -eq $true){
     Remove-Item $outfile
-}
-
-if($(test-path $logfile) -eq $true){
-    Remove-Item $logfile
 }
 
 $guildcharacters = @{}
@@ -17,8 +13,6 @@ $altsbutnotmains = @()
 $debug = $false
 
 . ..\commandline\create-dkpfiles-includes.ps1
-
-createlog -logfilepath $logfile
 
 logit -logline "raidfile: $raidfile" -logfilepath $logfile
 logit -logline "guildfile: $guildfile" -logfilepath $logfile

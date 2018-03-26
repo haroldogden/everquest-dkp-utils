@@ -2,6 +2,8 @@
 
 cd $PSScriptRoot
 
+. ..\commandline\create-dkpfiles-includes.ps1
+
 if($directorywithlogs){
     "Looking in $directorywithlogs for RaidRoster files..." | Write-Host
 }
@@ -17,6 +19,12 @@ else{
     }
     $directorywithlogs = $folder
 }
+
+# log in the audit.txt that the process is starting
+
+$thislogline = "dkprunner start"
+$auditpath = ($directorywithlogs + "\audit.txt")
+logit -logline $thislogline -logfilepath $auditpath
 
 $raidfiles = ls $directorywithlogs\RaidRoster-*.txt
 
@@ -41,9 +49,43 @@ if($raidfiles){
             "ERROR: No many files matched file " + $raidfile.Name | write-host -ForegroundColor Yellow
         }
     }
+    # ensure player was present for full first hour to get on-time dkp
+        $folder = $directorywithlogs
+
+        $importfiles = ls $folder\dkpimport* | Sort-Object Name
+
+        $ontimebonus = @()
+        $firstattendance = @()
+
+        get-content $importfiles[0].FullName | %{
+
+            $ontimebonus += $_.split("`t")[1]
+
+        }
+
+        get-content $importfiles[1].FullName | %{
+
+            $firstattendance += $_.split("`t")[1]
+
+        }
+
+        foreach($character in $ontimebonus){
+            if($character -in $firstattendance){
+                #$character | Write-Host -ForegroundColor Green
+            }
+            else{
+                $thislogline = ("Not present for first hour: " + $character)
+                $auditpath = ($directorywithlogs + "\audit.txt")
+                logit -logline $thislogline -logfilepath $auditpath
+            }
+        }
 }
 else{
     "No raid files found" | write-host -foregroundcolor Red
 }
+
+$thislogline = "dkprunner complete"
+$auditpath = ($directorywithlogs + "\audit.txt")
+logit -logline $thislogline -logfilepath $auditpath
 
 Read-Host "Script complete. Press Enter to quit..."
