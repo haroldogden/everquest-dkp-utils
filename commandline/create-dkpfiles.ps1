@@ -7,9 +7,13 @@ if($(test-path $outfile) -eq $true){
 }
 
 $guildcharacters = @{}
+#$offlineguilddump = @{} # debug
 $raidcharacters = @()
 $characterzones = @{}
 $altsbutnotmains = @()
+$altsandtheirmain = @{}
+$altsaddedtoattendance = @()
+$guildlookup = @{}
 $debug = $false
 
 . ..\commandline\create-dkpfiles-includes.ps1
@@ -26,6 +30,7 @@ logit -logline "guildfile: $guildfile" -logfilepath $logfile
 get-content $guildfile | % {
     $guildcharacters[$_.Split("`t")[0]] = $_.Split("`t")[1..8]
 }
+
 
 # and an array containing arrays of character information for those who were in the raid
 
@@ -63,6 +68,7 @@ foreach($thischaracter in $raidcharacters){
         elseif($thismain -notin $raidcharacters){
             $raidcharacters = $raidcharacters | ?{$_ -ne $thischaracter}
             $altsbutnotmains += $thismain
+            $altsandtheirmain[$thischaracter] = $thismain
             if($characterzones[$thismain]){
                 $characterzones[$thismain] += $guildcharacters[$thischaracter][5]
             }
@@ -88,7 +94,7 @@ foreach($thischaracter in $raidcharacters){
 }
 $raidcharacters.Count
 
-foreach($i in $(get-content $guildfile | %{$_.Split("`t")[6]} | Group-Object | Sort-Object Count -Descending)){
+foreach($i in $(get-content $guildfile | %{$_.Split("`t")[6]} | ?{$_ -notmatch "OFFLINE" -and  $_.Length -gt 5} |Group-Object | Sort-Object Count -Descending)){
     $i.Name + " has " + $i.Count + " players - is this the raid zone?"
     $answer = Read-Host "Y or N"
     if($answer -imatch "y"){
@@ -114,7 +120,7 @@ foreach($i in $raidcharacters){
 
 foreach($i in $altsbutnotmains){
     if($raidzone -in $characterzones[$i]){
-        $i + " is in zone " + $raidzone | Write-Host -ForegroundColor Cyan
+        $i + " is only present on an ALT and is in zone " + $raidzone | Write-Host -ForegroundColor Cyan
     }
     else{
         $i + " is NOT in zone " + $raidzone + ". They are in zone(s) " + $characterzones[$i] + ":: should they get dkp?" | Write-Host -ForegroundColor Yellow
@@ -129,8 +135,18 @@ foreach($line in $(get-content $raidfile)){
     if($splitline[1] -in $raidcharacters){
         $splitline[0..7] -join "`t" | Out-File -Append $outfile
     }
-    elseif($splitline[1] -in $altsbutnotmains){
-        $splitline[0..7] -join "`t" | Out-File -Append $outfile
+    elseif($altsandtheirmain.ContainsKey($splitline[1])){
+        if($altsandtheirmain[$splitline[1]] -in $altsaddedtoattendance){
+            "Alt found, but " + $altsandtheirmain[$splitline[1]] + " already counted for attendance - skipping..."
+        }
+        else{
+            $altsaddedtoattendance += $altsandtheirmain[$splitline[1]]
+            $temp = $splitline
+            $temp[1] = $altsandtheirmain[$splitline[1]]
+            $temp[2] = $guildcharacters[$temp[1]][0]
+            $temp[3] = $guildcharacters[$temp[1]][1]
+            logit -logline $("only on alt: " + $temp[1]) -logfilepath $logfile
+            $temp[0..7] -join "`t" | Out-File -Append $outfile
+        }
     }
 }
-
