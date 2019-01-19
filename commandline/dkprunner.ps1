@@ -26,14 +26,14 @@ $thislogline = "dkprunner start"
 $auditpath = ($directorywithlogs + "\audit.txt")
 logit -logline $thislogline -logfilepath $auditpath
 
-$raidfiles = ls $directorywithlogs\RaidRoster-*.txt
+$raidfiles = ls $directorywithlogs\RaidRoster_agnarr-*.txt
 
 if($raidfiles){
     foreach($raidfile in $raidfiles){
         "Processing raid file: " + $raidfile.Name | Write-Host -ForegroundColor Green
         $thisfiledate = $raidfile.Name.Split("-")[1]
         $thisfiletimeprefix = $raidfile.Name.Split("-")[2][0,1,2] -join ""
-        $thisguildfile = ls $directorywithlogs\Divinitas-$thisfiledate-$thisfiletimeprefix*.txt
+        $thisguildfile = ls $directorywithlogs\Divinitas_agnarr-$thisfiledate-$thisfiletimeprefix*.txt
         if($thisguildfile.count -eq 1){
             "Paired raid file with guild file: " + $thisguildfile.Name | Write-Host -ForegroundColor Green
             .\create-dkpfiles.ps1 -guildfile $thisguildfile.FullName -raidfile $raidfile.FullName
